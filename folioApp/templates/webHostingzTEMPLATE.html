@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+
+{% block title %} Web Hosting {% endblock %}
+
+{% block main %}
+
+<body>
+<div class="spacePageBorder">
+	<div class="index-title">
+		<h1 class="h1-index">Documentation for creating a web application on AWS, Centos 8, python3, Flask, Miniconda, nginx, gunicorn</h1>
+	</div>
+
+
+<div class="blogHeading1"><h2>Outline</h2>
+<ol class="tocList" type="1">
+	<li><a href="/blog/webHostingFlask">Build Flask Application</a></li>
+	<li><a href="/blog/webHostingAWS">Setup VM through AWS</a></li>
+	<li><a href="/blog/webHostingPuttyWinscp">Putty and WinSCP</a></li>
+	<li><a href="/blog/webHostingVmEnvironment">Setup VM environment, firewall, miniconda</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingVmEnvironment#miniconda">Miniconda</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#port5000">Get app run on port 5000</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#disableFirewall">Disable firewall</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#installNginx">Install nginx</a></li>
+		<ol type="a">
+			<li><a href="/blog/webHostingVmEnvironment#conf">Nginx conf file setup</a></li>
+			<li><a href="/blog/webHostingVmEnvironment#proxyParams">Proxy params</a></li>
+		</ol>
+		<li><a href="/blog/webHostingVmEnvironment#installGunicorn">Install gunicorn</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#serviceFile">Application run in background (create service file)</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#selinux">SELINUX</a></li>
+	</ol>
+	<li><a href="/blog/webHostingDomain">Get Domain and certify site (host second application on same VM)</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingDomain#route53">Route 53</a></li>
+		<li><a href="/blog/webHostingDomain#newConf">Build conf files with different ip address</a></li>
+		<li><a href="/blog/webHostingDomain#certbot">Certbot HTTPS</a></li>
+	</ol>	
+</ol>
+
+
+
+
+</div>
+<br/><br/><br/>
+<div class="blogHeading1" id="webHost1"><h2>Build Flask Application</h2></div>
+
+
+	<div class="sectionWriting">
+You will get directed to your elastic IP address console filtered for the one that was just assigned to you. <br/>
+Check this new elastic IP address on the left so that it is selected. On the top right of the screen you will see a dropdown for “Actions”. Click and select “Associate Elastic IP address”.
+	</div>
+	<div class="sectionWriting"> <h5>Elastic IP Address Console</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/17associateNewElasticIp.PNG') }} width="80%"> 
+	</div>
+
+
+	<div class="sectionWriting">
+Now you will have the option to associate the IP address to one of your instances. Click on the magnifying glass under “Instance”. <br/>
+Select the instance that we want to associate the IP address to. In my case I will use “thegoodeconomist04”. You may have named it something else. It doesn’t matter what the name is as long as you can distinguish between the instances.
+	</div>
+	<div class="sectionWriting"> <h5>Elastic IP Address Console</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/18selectInstanceToAssociate.PNG') }} width="80%"> 
+	</div>
+	<div class="sectionWriting">
+Also, I clicked the check for “Allow this Elastic IP address to be reassociated”. I’m not exactly sure what this does but I’ve removed and reused elastic IP addresses before so I click it.<br/>
+Finally, I click on “Associate” orange button on the bottom right.<br/>
+Find your way back to the Instances console and you’ll see that “thegoodeconomist04” is linked to the elastic IP address.<br/>
+Now we’re ready to access the VM. We will use Putty as the command line and WinScp to move files into the VM.
+	</div>
+
+
+
+
+
+
+
+
+
+
+	
+<br/><br/>
+
+
+Next we'll <a href="/blog/webHostingVmEnvironment">set up the VM environment</a>
+<br/><br/>
+<form method="POST" action="" enctype="multipart/form-data">
+<div class="col-8">
+<textarea class="form-control " name="textareaEntry" placeholder="Enter comments or questions here...">{{ textareaEntry }}</textarea>
+<button type="submit" class="btn btn-primary" name="submitPost" value="True">Submit Post</button>
+</div>
+</form>
+
+<br/><br/>
+<h3>Comments</h3>
+
+<br/>
+{% for post in posts %}
+    <article class="media content-section rm-border bodyColor">
+        <div class="media-body">
+            <div class="article-metadata">
+            <small class="text-muted">{{ post.datePosted.strftime('%Y-%m-%d') }} by {{ post.author.username }}</small>
+        </div>
+        <p class="article-content">{{ post.content }}</p>
+
+        </div>
+    </article>
+{% endfor %}
+
+
+
+
+
+</div>
+</body>
+{% endblock %}

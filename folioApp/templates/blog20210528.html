@@ -1,0 +1,111 @@
+{% extends "layout.html" %}
+
+{% block title %} Web Hosting {% endblock %}
+
+{% block main %}
+<body>
+    <div class="spacePageBorder">
+        <div class="index-title">
+            <h1 class="h1-index">Running Two applications on the same machine but different ports</h1>
+        </div>
+
+        <div class="blogHeading1" ><h4>/etc/ Folder Structure</h4></div>
+        <div class="sectionWriting"><pre class="codeBackground" ><code >
+└── etc
+    ├── nginx
+        └── conf.d
+            ├── kmdashboard.thegoodeconomist.com.conf
+            ├── dev1.thegoodconomist.com.conf
+    └── systemd
+        └── system
+            ├── fileShareApp.service
+            ├── fileShareAppProd.service
+        
+        </code></pre></div>
+
+        <div class="blogHeading1" ><h4>Nginx and Service Files</h4></div>
+        <div class="sectionWriting">
+            I have two applications:<br/>
+1)	App file package name: fileShareApp, conda Environment: fileShareApp, url: kmdashboard.thegoodeconomist.com<br/>
+2)	App file package name: fileShareApp, conda Environment: fileShareAppProd, url: dev1.thegoodeconomist.com<br/>
+            </div>
+
+
+        <div class="sectionWriting"> <h5>fileShareApp.service</h5><pre class="codeBackground" ><code >
+[Unit]
+Description=Gunicorn instance to serve fileShareApp in conda environment
+After=network.target
+
+[Service]
+User=sanjose
+Group=www-data
+WorkingDirectory=/home/sanjose/Documents/environments/fileShareApp
+Environment="PATH=/home/sanjose/miniconda3/envs/fileShareApp/bin"
+ExecStart=/home/sanjose/miniconda3/envs/fileShareApp/bin/gunicorn -w 3 run:app
+
+[Install]
+WantedBy=multi-user.target
+            </code></pre></div>
+
+        <div class="sectionWriting"> <h5>fileShareAppProd.service</h5><pre class="codeBackground" ><code >
+[Unit]
+Description=Gunicorn instance to serve fileShareAppProd in conda environment
+After=network.target
+
+[Service]
+User=sanjose
+Group=www-data
+WorkingDirectory=/home/sanjose/Documents/environments/prodFileShareApp
+Environment="PATH=/home/sanjose/miniconda3/envs/fileShareAppProd/bin"
+ExecStart=/home/sanjose/miniconda3/envs/fileShareAppProd/bin/gunicorn -w 4 -b 0.0.0.0:3000  run:app
+
+[Install]
+WantedBy=multi-user.target
+            </code></pre></div>
+
+
+            <div class="sectionWriting"> <h5>kmdashboard.thegoodconomist.com.conf</h5><pre class="codeBackground" ><code >
+    server {
+        listen       80;
+        listen       [::]:80;
+        server_name  kmdashboard.thegoodeconomist.com;
+
+
+    location /static {
+        alias /home/sanjose/Documents/environments/fileShareApp/fileShareApp/static;
+    }
+
+    location / {
+        proxy_pass http://localhost:8000;
+        include /etc/nginx/proxy_params;
+        proxy_redirect off;
+    }
+}
+        </code></pre></div>
+                
+
+
+        <div class="sectionWriting"> <h5>dev1.thegoodeconomist.com.conf</h5><pre class="codeBackground" ><code >
+    server {
+        listen       80;
+        listen       [::]:80;
+        server_name  dev1.thegoodeconomist.com;
+
+
+    location /static {
+        alias /home/sanjose/Documents/environments/prodFileShareApp/fileShareApp/static;
+    }
+
+    location / {
+        proxy_pass http://localhost:3000;
+        include /etc/nginx/proxy_params;
+        proxy_redirect off;
+    }
+}
+            </code></pre></div>
+
+
+
+</div>
+</body>
+{% endblock %}

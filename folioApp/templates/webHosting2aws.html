@@ -1,0 +1,227 @@
+{% extends "layout.html" %}
+
+{% block title %} Web Hosting {% endblock %}
+
+{% block main %}
+
+<body>
+<div class="spacePageBorder">
+	<div class="index-title">
+		<h1 class="h1-index">Documentation for creating a web application on AWS, Centos 8, python3, Flask, Miniconda, nginx, gunicorn</h1>
+	</div>
+
+<div class="blogHeading1"><h2>Outline</h2>
+<ol class="tocList" type="1">
+	<li><a href="/blog/webHostingFlask">Build Flask Application</a></li>
+	<li>Setup VM through AWS</li>
+	<li><a href="/blog/webHostingPuttyWinscp">Putty and WinSCP</a></li>
+	<li><a href="/blog/webHostingVmEnvironment">Setup VM environment, firewall, miniconda</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingVmEnvironment#miniconda">Miniconda</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#port5000">Get app run on port 5000</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#disableFirewall">Disable firewall</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#installNginx">Install nginx</a></li>
+		<ol type="a">
+			<li><a href="/blog/webHostingVmEnvironment#conf">Nginx conf file setup</a></li>
+			<li><a href="/blog/webHostingVmEnvironment#proxyParams">Proxy params</a></li>
+		</ol>
+		<li><a href="/blog/webHostingVmEnvironment#installGunicorn">Install gunicorn</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#serviceFile">Application run in background (create service file)</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#selinux">SELINUX</a></li>
+	</ol>
+	<li><a href="/blog/webHostingDomain">Get Domain and certify site (host second application on same VM)</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingDomain#route53">Route 53</a></li>
+		<li><a href="/blog/webHostingDomain#newConf">Build conf files with different ip address</a></li>
+		<li><a href="/blog/webHostingDomain#certbot">Certbot HTTPS</a></li>
+	</ol>	
+</ol>
+
+
+
+
+</div>
+<br/><br/><br/>
+<div class="blogHeading1" id="webHost1"><h2>Setup A Virtual Machine (VM) using Amazon Web Services(AWS)</h2></div>
+
+
+	<div class="sectionWriting">
+	First set up account with AWS. You’ll want to get to EC2 Management Console. It’s been three months since I’ve done that so I apologize I won’t have screenshots for that but I’m sure someone else has it. You’ll ultimately want to get to the EC2 Management Console. It will look something like this except there will be no instances. In shot I’m showing you there are five instances from which I have been troubleshooting.
+	</div>
+	<div class="sectionWriting"> <h5>EC2 Management Console</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/02ec2ManagementConsole.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Launch an instance. There are many steps here and perhaps many ways to go from here. I will show you my way. I click the orange “Launch instances” button. You will arrive at a screen that will allow you to select an operating system. I selected Centos 8 – basic installation. There is a search bar. I if I type “centos 8 basic” I get the result I want.
+	</div>
+	<div class="sectionWriting"> <h5>Centos 8 Basic Installation</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/03centos8basicImage.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Press “select”.<br/>
+	Then you will arrive at a screen that shows all the costs. 
+	</div>
+	<div class="sectionWriting"> <h5>Confirm Centos 8 Basic Installation</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/04confirmCentos8basicImage.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Press “Continue”.<br/>
+	Then you will arrive at a screen that asks for the size of the machine you want.
+	</div>
+	<div class="sectionWriting"> <h5>Confirm Centos 8 Basic Installation</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/05instanceTypeSize.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	I press “Next: Configure Instance Details”.<br/>
+	This screen... lots of options...
+	</div>
+	<div class="sectionWriting"> <h5>Configure Instance Details</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/06configInstanceDetails.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	I press “Next: Add Storage” on the bottom right.<br/>
+	More...
+	</div>
+	<div class="sectionWriting"> <h5>Add Storage</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/07addStorage.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	I press “Next: Add Tags” on the bottom right.<br/>
+	Here I add the name of the 
+	</div>
+	<div class="sectionWriting"> <h5>Add Tags</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/08addTags.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+Here I actually “Add Tag”
+For the key I enter “Name”. For the value I add “thegoodeconomist04” because that is the name I will assign this virtual machine.
+	</div>
+	<div class="sectionWriting"> <h5>Configure Security</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/09nextConfigSecurity.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+Configure security group.<br/>
+You'll notice I covered up a section across from SSH. That is for your home IP so you can access using Putty and WinSCP
+	</div>
+	<div class="sectionWriting"> <h5>Security Settings</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/10configSecurityTGE.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+After selecting security settings you "Launch"
+	</div>
+	<div class="sectionWriting"> <h5>Confirm Launch of Virtual Machine</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/11reviewInstanceLaunch.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+This next screen asks how you will connect with the VM. I will use a key pair so I don’t need a password. The first time you do this you will need to generate a pem file. You will want to remember where you save it. In the next section where were set up the VM environment we will use that file to connect to Putty and WinSCP.
+<br/>
+In the picture below I say (or link ppk) because once you’ve set up the link between your computer putty and WinSCP then you’ll have a ppk file. You’ll then use that instead of generating a pem file at this step.
+	</div>
+	<div class="sectionWriting"> <h5>Generate PEM file (or link ppk) from AWS</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/12linkKeyPairToInstance.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+The next screen just confirms and gives you the options to look at your instances. Click on “View Instances”.
+	</div>
+	<div class="sectionWriting"> <h5>New instances</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/13instancesConsoleWNewInstance.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+Next, we’ll want to associate an elastic IP address so that whenever the machine shuts down and has to turn back on you won’t have an entirely new IP address. To do this select “Elastic IPs” on the left menu.
+	</div>
+	<div class="sectionWriting"> <h5>Elastic IP address console</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/14elasticIp.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+I have two already but yours may not have any at this point. Click “Allocate Elastic IP address” top right orange button.
+	</div>
+	<div class="sectionWriting"> <h5>Allocate elastic IP address</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/15allocateElasticIp.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+I have two already but yours may not have any at this point. Click “Allocate Elastic IP address” top right orange button.
+	</div>
+	<div class="sectionWriting"> <h5>Allocate elastic IP address</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/15allocateElasticIp.PNG') }} width="80%"> 
+	</div>
+
+
+	<div class="sectionWriting">
+I just select “Allocate”.
+	</div>
+	<div class="sectionWriting"> <h5>Elastic IP Address Console with new IP address added</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/16elasticIpConsoleWnewIp.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+You will get directed to your elastic IP address console filtered for the one that was just assigned to you. <br/>
+Check this new elastic IP address on the left so that it is selected. On the top right of the screen you will see a dropdown for “Actions”. Click and select “Associate Elastic IP address”.
+	</div>
+	<div class="sectionWriting"> <h5>Elastic IP Address Console</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/17associateNewElasticIp.PNG') }} width="80%"> 
+	</div>
+
+
+	<div class="sectionWriting">
+Now you will have the option to associate the IP address to one of your instances. Click on the magnifying glass under “Instance”. <br/>
+Select the instance that we want to associate the IP address to. In my case I will use “thegoodeconomist04”. You may have named it something else. It doesn’t matter what the name is as long as you can distinguish between the instances.
+	</div>
+	<div class="sectionWriting"> <h5>Elastic IP Address Console</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/18selectInstanceToAssociate.PNG') }} width="80%"> 
+	</div>
+	<div class="sectionWriting">
+Also, I clicked the check for “Allow this Elastic IP address to be reassociated”. I’m not exactly sure what this does but I’ve removed and reused elastic IP addresses before so I click it.<br/>
+Finally, I click on “Associate” orange button on the bottom right.<br/>
+Find your way back to the Instances console and you’ll see that “thegoodeconomist04” is linked to the elastic IP address.<br/>
+Now we’re ready to access the VM. We will use Putty as the command line and WinScp to move files into the VM.
+	</div>
+
+	
+<br/><br/>
+Next we'll <a href="/blog/webHostingPuttyWinscp">set up the VM connection</a>
+<br/><br/>
+<form method="POST" action="" enctype="multipart/form-data">
+<div class="col-8">
+<textarea class="form-control " name="textareaEntry" placeholder="Enter comments or questions here...">{{ textareaEntry }}</textarea>
+<button type="submit" class="btn btn-primary" name="submitPost" value="True">Submit Post</button>
+</div>
+</form>
+
+<br/><br/>
+<h3>Comments</h3>
+
+<br/>
+{% for post in posts %}
+    <article class="media content-section rm-border bodyColor">
+        <div class="media-body">
+            <div class="article-metadata">
+            <small class="text-muted">{{ post.datePosted.strftime('%Y-%m-%d') }} by {{ post.author.username }}</small>
+        </div>
+        <p class="article-content">{{ post.content }}</p>
+
+        </div>
+    </article>
+{% endfor %}
+
+
+
+
+
+
+</div>
+</body>
+{% endblock %}

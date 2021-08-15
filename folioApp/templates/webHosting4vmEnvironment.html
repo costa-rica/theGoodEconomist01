@@ -1,0 +1,442 @@
+{% extends "layout.html" %}
+
+{% block title %} Web Hosting {% endblock %}
+
+{% block main %}
+
+<body>
+<div class="spacePageBorder">
+	<div class="index-title">
+		<h1 class="h1-index">Documentation for creating a web application on AWS, Centos 8, python3, Flask, Miniconda, nginx, gunicorn</h1>
+	</div>
+
+
+<div class="blogHeading1"><h2>Outline</h2>
+<ol class="tocList" type="1">
+	<li><a href="/blog/webHostingFlask">Build Flask Application</a></li>
+	<li><a href="/blog/webHostingAWS">Setup VM through AWS</a></li>
+	<li><a href="/blog/webHostingPuttyWinscp">Putty and WinSCP</a></li>
+	<li>Setup VM environment, firewall, miniconda</li>
+	<ol type="i">
+		<li><a href="/blog/webHostingVmEnvironment#miniconda">Miniconda</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#port5000">Get app run on port 5000</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#disableFirewall">Disable firewall</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#installNginx">Install nginx</a></li>
+		<ol type="a">
+			<li><a href="/blog/webHostingVmEnvironment#conf">Nginx conf file setup</a></li>
+			<li><a href="/blog/webHostingVmEnvironment#proxyParams">Proxy params</a></li>
+		</ol>
+		<li><a href="/blog/webHostingVmEnvironment#installGunicorn">Install gunicorn</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#serviceFile">Application run in background (create service file)</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#selinux">SELINUX</a></li>
+	</ol>
+	<li><a href="/blog/webHostingDomain">Get Domain and certify site (host second application on same VM)</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingDomain#route53">Route 53</a></li>
+		<li><a href="/blog/webHostingDomain#newConf">Build conf files with different ip address</a></li>
+		<li><a href="/blog/webHostingDomain#certbot">Certbot HTTPS</a></li>
+	</ol>	
+</ol>
+
+
+</div>
+<br/><br/><br/>
+<div class="blogHeading1"><h2>Setting up virtual machine (VM) environment</h2></div>
+
+	<div class="sectionWriting">
+	Access VM command line through Putty. Once in Putty command line terminal for thegoodeconomist04
+	</div>
+	<div class="sectionWriting"><h5>Give your computer (the VM) a name</h5><pre class="codeBackground">
+<code class="testCode">sudo hostnamectl set-hostname thegoodeconomist04</code></pre></div>
+
+
+	<div class="sectionWriting">
+Install nano editor. The "-y" just adds yes to all parameter in the install command. This program is how we’ll edit files on your machine.
+<br/><br/>
+There are some files we can edit directly from WinSCP. The files in our user folder. But then there are files in the /etc/ folder of the VM that require sudo privileges. I’m sure there is a way to set up WinSCP to do this but I haven’t figured it out. If someone has a good way or easy instruction to follow please let me know!
+	</div>
+	<div class="sectionWriting"><h5>Install nano editor</h5><pre class="codeBackground">
+<code class="testCode">sudo yum install nano -y</code></pre></div>
+
+
+	<div class="sectionWriting">
+I was not able to load miniconda and my application on the VM without extending the disk space. This might be because the VM that I selected was so small. I’m not really sure but I couldn’t move forward without this.
+	</div>
+	<div class="sectionWriting"><h5>Extend disk space</h5><pre class="codeBackground">
+<code class="testCode">sudo yum -y install cloud-utils-growpart gdisk
+lsblk
+sudo growpart /dev/xvda 2
+lsblk
+df -h
+sudo xfs_growfs /
+df -h</code></pre></div>
+
+
+
+	<div class="sectionWriting">
+Once in the ec2-user (your user folder on the VM) folder:
+	</div>
+	<div class="sectionWriting"><h5>Make environments folder</h5><pre class="codeBackground">
+<code class="testCode">mkdir environments</code></pre></div>
+
+	<div class="sectionWriting">
+from the ec2-user folder navigate to the environments folder.
+	</div>
+	<div class="sectionWriting"><h5>Make application folder</h5><pre class="codeBackground">
+<code class="testCode">mkdir flaskApp1</code></pre></div>
+
+
+	<div class="sectionWriting">
+This is what the folder structure should look like:
+	</div>
+<div class="sectionWriting"><pre class="codeBackground">
+<code class="testCode">└── ec2-user
+    ├── environments
+		└── flaskApp1
+</code></pre></div>
+
+
+	<div class="sectionWriting" id="miniconda">
+Next, download miniconda.
+There is probably a way to do this through the command line and I think installing the full Anaconda suite will work just as well but I am comfortable with miniconda.
+I download to my personal computer from here:
+<a href="https://docs.conda.io/en/latest/miniconda.html#linux-installers">Miniconda Linux Installers</a>
+	</div>
+	<div class="sectionWriting"><h5>Download miniconda</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/29downloadMiniconda.PNG') }} width="80%"> 
+	</div>
+
+
+	<div class="sectionWriting">
+Install 
+	</div>
+	<div class="sectionWriting"><h5>Install miniconda</h5><pre class="codeBackground">
+<code class="testCode">bash Miniconda3-latest-Linux-x86_64.sh</code></pre></div>
+
+
+	<div class="sectionWriting">
+You will need to press enter many times to scroll through their terms and conditions (T & C’s as I’ve heard them called before). At the end you get to a screen that looks like below. You’ll have to type “yes” to accept and then tell the installer where you want to store miniconda.
+
+I just press enter to allow miniconda to build in same folder the install package was moved into.
+	</div>
+	<div class="sectionWriting"><h5>Terminal installing miniconda</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/30minicondaLocation.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+It should not take too long. For some reason this has taken me various lengths of time. When it takes too long something happens. It might be something I’m doing. I’ve had to kill this machine and restart the process. Rarely does trying to fix problems that start here ever get better.
+	</div>
+	<div class="sectionWriting"><h5>Terminal installing miniconda</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/31minicondaSuccess.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+If you see this then it’s a good sign and you should close the shell and restart.
+
+
+After its installed you need to activate your environment and install the packages.
+
+Close and reopen the Putty shell.
+
+When you do it should look like this
+	</div>
+	<div class="sectionWriting"><h5>Putty Terminal</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/32puttyTerminal.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+This is what my folder structure looks like. Yours should probably similar. Don’t worry about the “__pycache__” folders those are created by python. If you need refresher on any of this stuff like I said go to one of the flask tutorials I mentioned 
+<a href="/blog/webHostingFlask#buildFlask">here</a>.
+	</div>
+
+<pre class="codeBackground">
+<code class="testCode">└── ec2-user
+    ├── environments
+		└── flaskApp1
+			├── __pycache__
+			├── appFolder
+				├── __pycache__
+				├── static
+				├── template
+				├── __init__
+				└── routes.py
+			└── run.py
+    ├── miniconda3
+    └── Miniconda3-latest-Linux-x86_64.sh
+</code></pre>
+
+	<div class="sectionWriting">
+Create your application environment as you usually would. Mine is very simple and just needs flask so I am just naming it ‘flaskApp1’ and installing python 3.9.
+	</div>
+	<div class="sectionWriting"><h5>Create Python environment</h5><pre class="codeBackground">
+<code>conda create -n flaskApp1 python=3.9 flask</code></pre></div>
+
+
+	<div class="sectionWriting">
+After successfully installing the new environment through conda navigate to your application folder. I called mine "flaskApp1".
+	</div>
+	<div class="sectionWriting"><h5>New python environment</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/33activateNewEnvironment.PNG') }} width="80%"> 
+	</div>
+
+
+
+	<div class="sectionWriting" id="port5000">
+Run your application. It should run fine in the terminal. The Putty terminal screen will look familiar to your running flask application.
+	</div>
+	<div class="sectionWriting"><h5>Run application</h5><pre class="codeBackground">
+<code>python run.py</code></pre></div>
+
+
+	<div class="sectionWriting">
+But at this point we cannot see the application for two reasons:
+<ol>
+	<li>We need to adjust the run.py file</li>
+	<li>Deactivate server firewall</li></ol>
+
+	</div>
+	<div class="sectionWriting"><h5>View the app on port 5000 but not quite yet...</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/34screenNotLoadingPort5000.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+The run.py file needs the parameter:
+	</div>
+	<div class="sectionWriting"><h5>Run application</h5><pre class="codeBackground">
+<code>app.run(host=’0.0.0.0’)</code></pre></div>
+
+	
+	<div class="sectionWriting"><h5>View the app on port 5000 but not quite yet...</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/35WinScpAndFlaskRunPy.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting" id="disableFirewall">
+Disable firewall. This could have been done earlier but at this point when you can’t see the app in port 5000 you need to disable to firewall to start seeing what you produced.
+	</div>
+	<div class="sectionWriting"><h5>Disable firewall</h5><pre class="codeBackground">
+<code>sudo firewall-cmd --state  
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+</code></pre></div>
+	
+	<div class="sectionWriting"><h5>View the app on port 5000 but not quite yet...</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/36port5000works.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+This is a good sign, but at this point we are running it off of port 5000 and we want to get it running on a production port so we need to install nginx, gunicorn and create some files. Once this is done we can get it to run a production port and we won’t need to use the terminal to keep the application running. It will just run on its own.
+	</div>	
+	<div class="sectionWriting"><h5>Terminal when flask application works</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/37terminalWhenFlaskAppWorks.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting" id="installNginx">
+Next, install nginx.<br/><br/>
+This part is the impetus for this entire blog entry. I spent ten's of hours troubleshooting the configuration and thinking that something else was the problem. In fact, I just had the configuration incorrect. There is an abundance of content that helped, but still required a lot of struggle on my part. I hope this helps but I wouldn’t be surprised if I still didn’t explain something in a way that you need to understand your specific circumstances.
+	</div>
+<pre class="codeBackground">
+<code>sudo yum install nginx -y</code></pre>
+
+
+	<div class="sectionWriting">
+When I installed nginx this is what the folder looks like, except for the “proxy_params” (highlighted in screenshot below). proxy_params is something I've seen in some instructions but not all. I can't get things to work without it.
+	</div>	
+	<div class="sectionWriting"><h5>nginx download (except no proxy_params)</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/38nginxFolder.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting" id="conf">
+Create nginx conf file
+We need to create a .conf file in the /etc/nginx/conf.d folder. The way my connections are set up I can nano into a new file by using these commands.
+
+Some instructions mention a sites-enabled folder. Not needed and never encountered this in my download or process. Also, there is no need to make any changes to any of the files in the /etc/nginx/conf.d folder except for adding the proxy_params file. Some instructions discuss making alterations to the nginx.conf file but this was not needed to get things to work. The .conf files in the /etc/nginx/conf.d folder do all the redirecting.
+<br/>
+The command below will create a file in the conf.d folder called "52.71.108.45.conf"
+	</div>
+<pre class="codeBackground">
+<code>sudo nano /etc/nginx/conf.d/52.71.108.45.conf</code></pre>
+
+	<div class="sectionWriting">
+The copy this text into your new file in the nano editor you just opened.
+
+Things to note:
+<ol>
+<li>server name needs to get replaced with your ip address. Once you get a domain you’ll enter in the domain here. You can put more than one domain as well. I’ll show in this as we move along in this documentation. </li>
+<li>the path I have in “location/static” will be different for you but this structure should make sense. It just needs to access your static files in your flask app. </li>
+<li>“location/” just copy this exactly. Later on in this documentation you’ll change http://localhost:8000; to another port because that is where nginx will direct traffic if you choose to have another app on this same VM.</li>
+</ol>
+	</div>
+<pre class="codeBackground">
+<code>    server {
+        listen       80;
+        listen       [::]:80;
+        server_name  52.71.108.45;
+
+
+	location /static {
+		alias /home/ec2-user/environments/flaskApp1/appFolder/static;
+	}
+
+	location / {
+		proxy_pass http://localhost:8000;
+		include /etc/nginx/proxy_params;
+		proxy_redirect off;
+	}
+}
+</code></pre>
+
+	<div class="sectionWriting"><h5>nginx conf file</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/39nginxConfFile.PNG') }} width="80%"> 
+	</div>
+
+
+
+	<div class="sectionWriting" id="proxyParams">
+Then we need to create a proxy_params file in the /etc/nginx folder.
+	</div>
+<pre class="codeBackground">
+<code>sudo nano /etc/nginx/proxy_params</code></pre>
+	<div class="sectionWriting">
+ Copy this code into that file:
+	</div>
+<pre class="codeBackground">
+<code>proxy_set_header Host $http_host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $scheme;
+</code></pre>
+
+	<div class="sectionWriting">
+Your file and directory should look like this
+	</div>
+	<div class="sectionWriting"><h5>nginx download (except no proxy_params)</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/40nginxFolderAndProxy_params.PNG') }} width="80%"> 
+	</div>
+
+
+	<div class="sectionWriting">
+Restart nginx. It may already be running. Get comfortable with these commands. I’ve seen people use reload. That doesn’t seem to work for me. I stop and then start again. I’ve noticed now that I may not need to start and restart nginx for changes to the flask app, but as I was troubleshooting the nginx config files I did this often to verify if a change worked or not.
+<br/>
+Here are the commands that I use:
+	</div>
+<pre class="codeBackground">
+<code>sudo systemctl stop nginx
+sudo systemctl start nginx</code></pre>
+
+
+	<div class="sectionWriting">
+Once it’s running you should be able to type in the IP address and see a page that looks like this. Indicating that nginx is running but your app isn’t running, at least on port 8000 the default port for flask or something…
+	</div>
+	<div class="sectionWriting"><h5>nginx download (except no proxy_params)</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/41nginxBadGateway.PNG') }} width="80%"> 
+	</div>
+
+
+	<div class="sectionWriting" id="installGunicorn">
+Install gunicorn
+	</div>
+<pre class="codeBackground">
+<code>pip install gunicorn</code></pre>
+
+	<div class="sectionWriting">
+Determine the number of workers.
+Two times the number of cores on your machine plus one
+In order to see the number of cores on the machine
+
+	</div>
+	<div class="sectionWriting"><h5>Determine workers for Gunicorn</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/42determinWorksForGunicorn.PNG') }} width="80%"> 
+	</div>
+
+
+	<div class="sectionWriting" id="serviceFile">
+Now that we have this information we need to build a service file to run the application in the background. To do this nano into a new file that is called the application name .service.
+	</div>
+<pre class="codeBackground"><code>sudo nano /etc/systemd/system/flaskApp1.service</code></pre>
+	<div class="sectionWriting">
+The copy the code below into the flaskApp1.service file. Make adjustments where necessary but if you used the same names as in this documentation copy this exactly. The description can be different and improved.
+	</div>
+
+<pre class="codeBackground">
+<code>[Unit]
+Description=Gunicorn instance to serve flaskApp1 from flaskApp1 conda enviornment
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/environments/flaskApp1
+Environment="PATH=/home/ec2-user/miniconda3/envs/flaskApp1/bin"
+ExecStart=/home/ec2-user/miniconda3/envs/flaskApp1/bin/gunicorn -w 3 run:app
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+
+	<div class="sectionWriting">
+Now let’s see if it works by using a command that runs the service file which uses gunicron to ultimately run flaskApp1.
+	</div>
+<pre class="codeBackground">
+<code>sudo systemctl start flaskApp1</code></pre>
+	<div class="sectionWriting">
+If you need to restart the application I use a similar process to nginx where I stop then start again.
+	</div>
+<pre class="codeBackground">
+<code>sudo systemctl stop flaskApp1</code></pre>
+
+	<div class="sectionWriting" id="selinux">
+At this point even with nginx and flaskApp1.service running when I type the IP address into a internet browser I still get 502 Bad Gateway error.
+
+What I need to do is change the SELINUX permissions. I’ve not seen a lot of content around doing this so I’m not sure it’s the best and most secure but it works. I’d welcome a better explanation or alternative.
+To set SELINUX permissions to "Permissive":
+	</div>
+<pre class="codeBackground">
+<code>sudo setenforce Permissive</code></pre>
+
+
+	<div class="sectionWriting">
+Making this change will now give us the site on port 8000 which can be accessed by entering the IP address in any browser.
+	</div>
+	<div class="sectionWriting"><h5>Application is running on our website</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/43flaskApp1onPort8000.PNG') }} width="80%"> 
+	</div>
+
+	
+<br/><br/>
+
+
+Next we'll get a <a href="/blog/webHostingVmEnvironment">domain and certify</a>. I'll also show the additions needed to run a second application on same VM.
+<br/><br/>
+
+
+
+
+<form method="POST" action="" enctype="multipart/form-data">
+<div class="col-8">
+<textarea class="form-control " name="textareaEntry" placeholder="Enter comments or questions here...">{{ textareaEntry }}</textarea>
+<button type="submit" class="btn btn-primary" name="submitPost" value="True">Submit Post</button>
+</div>
+</form>
+
+<br/><br/>
+<h3>Comments</h3>
+
+<br/>
+{% for post in posts %}
+    <article class="media content-section rm-border bodyColor">
+        <div class="media-body">
+            <div class="article-metadata">
+            <small class="text-muted">{{ post.datePosted.strftime('%Y-%m-%d') }} by {{ post.author.username }}</small>
+        </div>
+        <p class="article-content">{{ post.content }}</p>
+
+        </div>
+    </article>
+{% endfor %}
+
+
+
+
+
+</div>
+</body>
+{% endblock %}

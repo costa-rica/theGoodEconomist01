@@ -1,0 +1,14 @@
+__pycache__/
+LifeBuddyWebApp/__pycache__/
+*.zip
+*log.txt
+misc_not_for_git/
+Untitled*
+.ipynb_checkpoints/
+dev-shiftgartenFiles/
+folioApp_awsServer/
+jupyterNotebooksStorage/
+logo/
+misc/
+folioAppServerTroubleshootingLog.xlsx
+font for portfolio thegoodeoncomist.PNG

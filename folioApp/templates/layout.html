@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Import the Bootstrap stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/css/bootstrap.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/css/font-awesome.min.css') }}">
+    <!-- Import our custom stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <title>{% block title %}{% endblock %}</title>
+</head>
+<body>
+<header class="header">
+<nav class="navbar navbar-expand-lg navbar-light"><!--navbar-light impacts color of text and navbar-toggler-icon when width shrinks-->
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#"><div class="crop"><img  src={{ url_for('static', filename='thegoodeconomistlogo20210322.png') }} alt="Italian Trulli"></a> <!--image from: https://www.freelogodesign.ca/manager/showcase/6bde49edc4de40a3911ec61f78134f82-->
+	</div>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+
+    </button>
+    <div class="collapse navbar-collapse justify-content-between" id="navbarSupportedContent">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/dataTools">Data Tools</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/blog">Blog</a>
+        </li>
+      </ul>
+      <form class="d-flex">
+        <input class="form-control me-2" type="search" placeholder="Search (not working yet) " aria-label="Search">
+        <button class="btn btn-outline-success" type="submit">Search</button>
+      </form>
+    </div>
+  </div>
+</nav>
+</header>
+
+	  {% with messages = get_flashed_messages(with_categories=true) %}
+		{% if messages %}
+		  {% for category, message in messages %}
+			<div class="alert alert-{{ category }}">
+			  {{ message }}
+			</div>
+		  {% endfor %}
+		{% endif %}
+	  {% endwith %}
+		  
+	{% block main %}{% endblock %}
+
+
+	<!-- Import our custom JavaScript -->
+	<script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+	{% block script %}{% endblock %}
+</body>
+</html>

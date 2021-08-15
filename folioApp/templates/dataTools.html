@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block title %} data tools {% endblock %}
+
+{% block main %}
+<!--<style type="text/css">.description {color:#990000}</style>-->
+
+
+<body>
+<div class="spacePageBorder">
+	<div class="index-title">
+		<h1 class="h1-index">Data Tools</h1>
+	</div>
+
+
+	<div class="dataToolsGrid">
+
+		<div class="dla"><a href="/cageCodeSearch">
+			<div><h3 class="h3-dt">DLA CAGE Code Company Search</h3>
+				<p class="p-dt">Using the DLA's CAGECDS.txt batch file I've stored searchable information on this site.</p>
+			</div>
+		</a></div>
+		
+		<div class="bls"><a href={{ url_for('datatools.blsCommodity',cs0="checked",cs5="checked", cs11="checked") }}>
+			<div><h3 class="h3-dt">BLS Indices</h3>
+				<p class="p-dt">Download the latest Bureau of Labor (BLS) producer price indices (PPI) in a formatted excel
+					file.</p></div>
+		</a></div>
+		
+				<div class="security"><a href="/security">
+			<div><h3 class="h3-dt">Security</h3>
+				<p class="p-dt">Retrieve HTTP Strict-Transport-Security (HSTS) policy from URLs. Type in URLs or upload a
+					csv with URLs to search and return a table or csv with HSTS policies.</p></div>
+		</a></div>
+		
+	</div>
+</div>
+
+
+</body>
+{% endblock %}

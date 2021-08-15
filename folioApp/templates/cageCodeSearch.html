@@ -1,0 +1,132 @@
+{% extends "layout.html" %}
+
+{% block title %} CAGE Code Lookup {% endblock %}
+
+{% block main %}
+
+<head>
+    <!-- Show file name in input type="file" -->
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"
+            integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n"
+            crossorigin="anonymous"></script>
+
+    <!-- Datatable -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css"
+          href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/plug-ins/1.10.15/dataRender/datetime.js"></script>
+
+</head>
+
+<div class="spacePageBorder">
+
+<h2 class="h2-cage">{{ siteTitle }}</h2>
+</br>
+<div class="col-9">
+<p>This page uses a database created from the Defense Logistics Agencey (DLA) which stores all Commercial and Government Entity (CAGE) codes.
+The data from this site comes from the 
+	<a href="https://www.dla.mil/HQ/InformationOperations/LogisticsInformationServices/FOIAReading.aspx">DLA Electronic Reading Room</a>. Specifically, the 
+	DLA CAGECDS.txt file for company CAGE information.
+    Here the user can lookup on CAGE codes within the database.</br>
+
+</p></div>
+<form action="#" method="POST" enctype="multipart/form-data">
+<div class = "cageBox lightPadding">
+    <!--Enter path to batch file: <input type="file" name="cageBatch"/>
+
+    <button type="submit" name="actionUpload" value="upload" style="margin-left: 2%"> Upload</button>
+    {{uploadFlag}}-->
+	
+	<h4>Enter search criteria:</h4>
+	{% if searchStringDict %}
+	
+		{% for key, searchCriteria in searchDictClean.items() %}
+		<div class="row">
+		<span class="col-4"><span class="criteriaLabel">{{ searchCriteria }}: </span></span>
+		<span class="col-3"><input type="text" name="{{ key }}" value= {{ searchStringDict[searchCriteria] }}></span>
+		<span class=" col-3">
+			<span class="exactCheck"><input class="form-check-input" type="checkbox" name={{ key + "Exact"}}  value="checked">
+			<label class="form-check-label" for={{ key + "Exact"}}>Exact match</label></span>
+		</span>
+		
+		</div>
+		{% endfor %}
+	
+	{% else %}
+		{% for key, searchCriteria in searchDictClean.items() %}
+		<div class="row">
+		<span class="col-4"><span class="criteriaLabel">{{ searchCriteria }}: </span></span>
+		<span class="col-3"><input type="text" name={{ key }}></span>
+		<span class=" col-3">
+			<span class="exactCheck"><input class="form-check-input" type="checkbox" name={{ key + "Exact"}}  value="checked">
+			<label class="form-check-label" for={{ key + "Exact"}}>Exact match</label></span>
+		</span>
+		
+		</div>
+		{% endfor %}
+	{% endif %}
+
+	<div class="cageButton">
+    <button type="submit" name="searchCage" value="search" class="btn btn-primary"> Search</button>
+    
+	{% if searchStringDict %}
+    <button type="submit" name="searchCage" value="download" class="btn btn-primary"> Download Excel</button>
+	<span class="clearButton">
+	<button type="submit" class="btn greyButton" name="clearButton" value="clear">Clear</button>
+	</span>
+	{% endif %}
+	<span class="col-2">      </span>
+	</div>
+
+</div>
+<br/>
+<br/>
+ {% if searchStringDict %}
+	<h2>Displaying {{ resultsCount }} results on search criteria for:</h2>
+	<ul>
+	{% for i, j in searchStringDict.items() %}
+		{% if j != '' %}
+			<li>
+			{% if exactDict.get(i) %}
+				{{ i }} <u>exactly</u> matching <q><b>{{ j }}</b></q><br/>
+			{% else %}
+				{{ i }} containing <q><b>{{ j }}</b></q><br/>
+			{% endif %}
+			</li>
+		{% endif %}
+	{% endfor %}
+	</ul>
+ {% endif %}
+</form>
+<!--copied this from security.html to build table, probably needs somehig above in headers-->
+	<div class="mt-4">
+	<table id="proxies" class="display table nowrap responsive" style="width: 100%">
+		<thead>
+			<tr>
+				{% for header in columnNames %}
+					<th>{{header}}</th>
+				{% endfor %}
+			</tr>
+		</thead>
+		<tbody>
+		{% for row in dfResults %}
+			<tr>
+				{% for index in range(0, len(columnNames)) %}
+					<td>{{row[columnNames[index]]}}</td>
+				{% endfor %}
+			</tr>
+		{% endfor %}
+
+		</tbody>
+	</table>
+	</div>
+</div>
+<script type="text/javascript">
+    $('#proxies').DataTable();
+</script>
+
+{% endblock %}

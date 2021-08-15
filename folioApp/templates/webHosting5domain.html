@@ -1,0 +1,288 @@
+{% extends "layout.html" %}
+
+{% block title %} Web Hosting {% endblock %}
+
+{% block main %}
+
+<body>
+<div class="spacePageBorder">
+	<div class="index-title">
+		<h1 class="h1-index">Documentation for creating a web application on AWS, Centos 8, python3, Flask, Miniconda, nginx, gunicorn</h1>
+	</div>
+
+
+<div class="blogHeading1"><h2>Outline</h2>
+<ol class="tocList" type="1">
+	<li><a href="/blog/webHostingFlask">Build Flask Application</a></li>
+	<li><a href="/blog/webHostingAWS">Setup VM through AWS</a></li>
+	<li><a href="/blog/webHostingPuttyWinscp">Putty and WinSCP</a></li>
+	<li><a href="/blog/webHostingVmEnvironment">Setup VM environment, firewall, miniconda</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingVmEnvironment#miniconda">Miniconda</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#port5000">Get app run on port 5000</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#disableFirewall">Disable firewall</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#installNginx">Install nginx</a></li>
+		<ol type="a">
+			<li><a href="/blog/webHostingVmEnvironment#conf">Nginx conf file setup</a></li>
+			<li><a href="/blog/webHostingVmEnvironment#proxyParams">Proxy params</a></li>
+		</ol>
+		<li><a href="/blog/webHostingVmEnvironment#installGunicorn">Install gunicorn</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#serviceFile">Application run in background (create service file)</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#selinux">SELINUX</a></li>
+	</ol>
+	<li><a href="/blog/webHostingDomain">Get Domain and certify site (host second application on same VM)</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingDomain#route53">Route 53</a></li>
+		<li><a href="/blog/webHostingDomain#newConf">Build conf files with different ip address</a></li>
+		<li><a href="/blog/webHostingDomain#certbot">Certbot HTTPS</a></li>
+	</ol>	
+</ol>
+
+
+
+
+</div>
+<br/><br/><br/>
+<div class="blogHeading1"><h2>Add another application to the same server (including get a domain and certify HTTPS)</h2></div>
+
+
+	<div class="sectionWriting">
+If you are only running one application on the VM some of this stuff you can skip. The steps will be mixed in<!--, 
+but I will highlight the steps in orange that don’t need to be done if you are only doing one application-->. Basically, if you are just supporting one application you won’t need to do any more miniconda or gunicorn changes. You would just do a change to nginx conf file, route 53 and certbot to get your https.
+	</div>
+	<div class="sectionWriting">
+Copy the second application to the environments folder on the VM. Your user folder ("ec2-user" is my user name, hence AWS called it ec2-user) should look like this:
+	</div>
+<pre class="codeBackground">
+<code class="testCode">└── ec2-user
+    ├── environments
+		├── flaskApp1
+			├── __pycache__
+			├── appFolder
+				├── __pycache__
+				├── static
+				├── template
+				├── __init__
+				└── routes.py
+			└── run.py
+		└── flaskApp2
+			├── __pycache__
+			├── appFolder
+				├── __pycache__
+				├── static
+				├── template
+				├── __init__
+				└── routes.py
+			└── run.py
+    ├── miniconda3
+    └── Miniconda3-latest-Linux-x86_64.sh
+</code></pre>
+
+
+
+	<div class="sectionWriting">
+Create another conda environment to run gunicorn. It doesn’t matter where you on the putty terminal. The reason for this is that you’ll need gunicorn to run the application and in the previous environment its running flaskApp1.<br/>
+There might be some work around or even something very elementary that I’m missing but this is how I’m getting everything to run.
+
+	</div>
+	<div class="sectionWriting"><h5>Create environment for second application</h5><pre class="codeBackground">
+<code>conda create -n flaskApp2 python=3.9 flask</code></pre></div>
+	<div class="sectionWriting">
+Since gunicorn isn’t in the conda library I just add it separately using pip.
+	</div>
+	<div class="sectionWriting"><h5>Install gunicorn</h5><pre class="codeBackground">
+<code>pip install gunicorn</code></pre></div>
+
+	<div class="sectionWriting">
+After successfully installing the new environment through conda navigate to your application folder. I called mine "flaskApp1".
+	</div>
+	<div class="sectionWriting"><h5>New python environment</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/44gunicornAlreadySatisfied.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+It might say it’s already been satisfied.<br/>
+Remember to set your run.py file to configure the run.py file.
+	</div>
+	<div class="sectionWriting"><h5>New python environment</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/45flaskApp2runFile.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+At this point if you go to the directory are python run.py and run the application you should be able to see it on port 5000.
+	</div>
+
+	<div class="sectionWriting"><h5>New python environment</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/46flaskApp2port5000.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting" id="route53">
+But we want this to run on another port, say 3000.
+In order to get flaskApp2 to run on port 300 you’ll need to purchase a domain through AWS route 53. I know you can do other services like godaddy.com but not sure how to link that up. The steps I’m going to show are once you have the domain purchased there is a hosted zones console when you navigate to Route 53 on AWS.<br/>
+Route 53 is likely located on the left menu of AWS but if you type “Route 53” in the AWS search bar you’ll get there as well. Once you find your way to hosted zones you should see a screen that looks like mine below but your domain listed. Click on the domain name you want to use for your website.
+	</div>
+	<div class="sectionWriting"><h5>New python environment</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/47hostedZones.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting" >
+I’m going to set up each application to run on [app name].[domain]. But if you only have one application you can just use the domain. For example, this site gets direct through the domain only. But for the flaskApp1 and flaskApp2 I have other routes. The screenshot below shows this distinction.
+	</div>
+	<div class="sectionWriting"><h5>New python environment</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/48hostedZonesTge.PNG') }} width="80%"> 
+	</div>
+
+
+	<div class="sectionWriting" >
+To associate the IP address to any record name select “Create record”.
+	</div>
+	<div class="sectionWriting"><h5>New python environment</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/49createRecord.PNG') }} width="80%"> 
+	</div>
+
+
+	<div class="sectionWriting" >
+If you’re just going to map another url using the same domain to the same application you can create a record and add something like “www” to the beginning of the domain. Set the type to “CNAME” and route to the “Type” “A” record as you can see with my www.thegoodeconomist.com record in screenshot above.
+<br/><br/>
+Next, we'll work with the nginx conf file.
+<br/>
+Once AWS Route 53 is set up with web addresses you want to use then you will need to direct the traffic within nginx. The conf.d files is where you do this. I have found a lot of content on this and in the past had very messy conf files. The screen shot below shows how you should set up your conf files. The file names should be the web address followed by “.conf”. You can have more than one web address in them as well. If you have one with “www.” you can just add that to the server name.
+	</div>
+	<div class="sectionWriting"><h5>New python environment</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/50nginxConfFiles.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+The format of these files is one space between the item and value. Semi-colons end lines. Curly braces keep sections together.
+	</div>
+	<div class="sectionWriting"><h5>Contents of nginx conf file for flaskApp2</h5><pre class="codeBackground">
+<code>    server {
+        listen       80;
+        listen       [::]:80;
+        server_name  flaskApp2.thegoodeconomist.com;
+
+
+	location /static {
+		alias /home/ec2-user/environments/flaskApp2/appFolder/static;
+	}
+
+	location / {
+		proxy_pass http://localhost:3000;
+		include /etc/nginx/proxy_params;
+		proxy_redirect off;
+	}
+}
+</code></pre></div>
+	<div class="sectionWriting">
+I create the files on my personal computer then move them to the /home/ec2-user/ folder. Since I don’t have “sudo” permissions from WinSCP I move the files from the Putty terminal like this:
+	</div>
+	<div class="sectionWriting"><h5>Linux command for moving file</h5><pre class="codeBackground">
+<code>sudo mv /home/ec2-user/flaskApp1.thegoodeconomist.com.conf /etc/nginx/conf.d/flaskApp1.thegoodeconomist.com.conf</code></pre>
+<pre class="codeBackground"><code>sudo mv /home/ec2-user/flaskApp2.thegoodeconomist.com.conf /etc/nginx/conf.d/flaskApp2.thegoodeconomist.com.conf</code></pre></div>
+	<div class="sectionWriting">
+After moving the files if you try to go straight to one of the domains without restarting or reloading nginx you will most likely get a nginx redirect. Like below
+	</div>
+	<div class="sectionWriting">
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/51nginxRedirect.PNG') }} width="80%"> 
+	</div>
+	<div class="sectionWriting">
+Restart nginx
+	</div>
+	<div class="sectionWriting"><h5>Restart nginx</h5><pre class="codeBackground">
+<code>sudo systemctl restart nginx</code></pre></div>
+	<div class="sectionWriting">
+After moving the files if you try to go straight to one of the domains without restarting or reloading nginx you will most likely get a nginx redirect. Like below
+	</div>
+	<div class="sectionWriting">
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/52nginxRedirectFlaskApp1Working.PNG') }} width="50%"> 
+	</div>
+
+	<div class="sectionWriting">
+To get flaskApp2 on the web you’ll need to set up the service file like you did for flaskApp1 except set the port parameter. You could sudo into a new file like this:
+	</div>
+<div><pre class="codeBackground">
+<code>sudo nano /etc/systemd/system/flaskApp2.service</code></pre></div>
+
+	<div class="sectionWriting">
+Then enter this to the file:
+	</div>
+	<div><pre class="codeBackground">
+<code>[Unit]
+Description=Gunicorn instance to serve flaskApp2 from flaskApp2 conda enviornment
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/environments/flaskApp2
+Environment="PATH=/home/ec2-user/miniconda3/envs/flaskApp2/bin"
+ExecStart=/home/ec2-user/miniconda3/envs/flaskApp2/bin/gunicorn -w 3 -b 0.0.0.0:3000 run:app
+
+[Install]
+WantedBy=multi-user.target
+</code></pre></div>
+
+	<div class="sectionWriting">
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/52nginxRedirectFlaskApp1Working.PNG') }} width="50%"> 
+	</div>
+
+	<div class="sectionWriting">
+Run flaskApp2.service. 
+	</div>
+	<div class="sectionWriting"><pre class="codeBackground">
+<code>sudo systemctl start flaskApp2</code></pre></div>
+	<div class="sectionWriting">
+After the service file kicks off the application it should be running in the background and you can go to the web address and view the application.
+	</div>
+	<div class="sectionWriting">
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/53flaskApp2onPort3000webAddress.PNG') }} width="50%"> 
+	</div>
+
+
+
+	
+<br/><br/>
+
+
+Hopefully, that's it! Feel free to leave a comment.
+<br/><br/>
+<h1>
+	<span id="up" style="padding-right: 2em;" class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+	<span id="down" class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+</h1>
+<div style="padding-bottom: 2em;">
+	<div id="uptarget"></div>
+	<div id="downtarget"></div>
+</div>
+
+
+<form method="POST" action="" enctype="multipart/form-data">
+<div class="col-8">
+<textarea class="form-control " name="textareaEntry" placeholder="Enter comments or questions here...">{{ textareaEntry }}</textarea>
+<button type="submit" class="btn btn-primary" name="submitPost" value="True">Submit Post</button>
+</div>
+</form>
+
+
+<br/><br/>
+<h3>Comments</h3>
+
+<br/>
+{% for post in posts %}
+    <article class="media content-section rm-border bodyColor">
+        <div class="media-body">
+            <div class="article-metadata">
+            <small class="text-muted">{{ post.datePosted.strftime('%Y-%m-%d') }} by {{ post.author.username }}</small>
+        </div>
+        <p class="article-content">{{ post.content }}</p>
+
+        </div>
+    </article>
+{% endfor %}
+
+
+
+
+
+</div>
+</body>
+{% endblock %}

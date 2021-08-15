@@ -1,0 +1,161 @@
+{% extends "layout.html" %}
+
+{% block title %} Web Hosting {% endblock %}
+
+{% block main %}
+
+<body>
+<div class="spacePageBorder">
+	<div class="index-title">
+		<h1 class="h1-index">Documentation for creating a web application on AWS, Centos 8, python3, Flask, Miniconda, nginx, gunicorn</h1>
+	</div>
+
+<div class="blogHeading1"><h2>Summary</h2></div>
+	<div class="sectionWriting">
+		This documentation will guide the user to build a flask application and Amazon Web Services (AWS) virtual machine (VM) to share the application on the internet. This tutorial will focus on building the VM from scratch. There are many topics to getting the application running and this will provide exhaustive details on the process.
+		<br/><br/>
+		There are many tutorials for building a flask application, these are some that I’ve found extremely helpful and I’ve leveraged in this documentation [link to links]. The flask portion will be very simple and I think for most programmers it will provide a good connection to some of the more sophisticated flask application tutorials which you will most likely want to use.
+		<br/><br/>
+		There are also many tutorials for setting up the virtual machine and posting your application on the internet. Even thought there is an abundance of help online I still struggled through this process. This may be redundant but in my process I found that even though I know there was more content on this topic I was never under the impression that there is too much. In fact, I’m sure I saw some content that was exactly replication of others but it wasn’t until I saw it for the second time in a different website that the concept resonated. So here is one more…
+	</div>
+
+
+<div class="blogHeading1"><h2>Outline</h2>
+<ol class="tocList" type="1">
+	<li>Build Flask Application</li>
+	<li><a href="/blog/webHostingAWS">Setup VM through AWS</a></li>
+	<li><a href="/blog/webHostingPuttyWinscp">Putty and WinSCP</a></li>
+	<li><a href="/blog/webHostingVmEnvironment">Setup VM environment, firewall, miniconda</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingVmEnvironment#miniconda">Miniconda</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#port5000">Get app run on port 5000</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#disableFirewall">Disable firewall</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#installNginx">Install nginx</a></li>
+		<ol type="a">
+			<li><a href="/blog/webHostingVmEnvironment#conf">Nginx conf file setup</a></li>
+			<li><a href="/blog/webHostingVmEnvironment#proxyParams">Proxy params</a></li>
+		</ol>
+		<li><a href="/blog/webHostingVmEnvironment#installGunicorn">Install gunicorn</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#serviceFile">Application run in background (create service file)</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#selinux">SELINUX</a></li>
+	</ol>
+	<li><a href="/blog/webHostingDomain">Get Domain and certify site (host second application on same VM)</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingDomain#route53">Route 53</a></li>
+		<li><a href="/blog/webHostingDomain#newConf">Build conf files with different ip address</a></li>
+		<li><a href="/blog/webHostingDomain#certbot">Certbot HTTPS</a></li>
+	</ol>	
+</ol>
+</div>
+<br/><br/><br/>
+<div class="blogHeading1" id="buildFlask"><h2>Build Flask Application</h2></div>
+	<div class="sectionWriting">
+		This uses a flask application as a package.<br/><br/>
+		This uses a flask application as a package. In this documentation I am going to show the overall layout of building a flask app package but not go into details. My intention is that you will see how the flask application structure fits into the AWS framework and you can fit your application into the framework.
+		<br/><br/>
+		Here are some tutorials that I’ve used to help me build this website and other much more complicated websites. Use any of these to learn Flask:
+		<a href="https://www.youtube.com/playlist?list=PL-osiE80TeTs4UjLw5MM6OjgkjFeUxCYH">Corey Shafer </a>,
+		<a href="https://pythonise.com/series/learning-flask/your-first-flask-app">Pythonise.com</a>,
+		<a href="https://www.techwithtim.net/tutorials/flask/">Tech With Tim</a>,
+		<a href="https://www.youtube.com/playlist?list=PLXmMXHVSvS-CoYS177-UvMAQYRfL3fBtX">Pretty Printed</a>.
+	
+		<br/>
+		For in depth understanding go to them or the <a href="https://flask.palletsprojects.com/en/1.1.x/">documentation</a>. It's really good documentation but I found videos much more helpful. Again, below will be helpful if you’ve already built an application. The pieces I show in this section will only show you how the puzzle fits with the AWS, Putty, WinSCP, etc. 
+		
+	</div>
+	<div class="blogHeading1" ><h4>Flask Application Package Folder Structure</h4></div>
+	<div class="sectionWriting"><pre class="codeBackground" ><code >
+\---flaskApp1
+	|   run.py
+	|
+	\---appFolder
+		|   routes.py
+		|   __init__.py
+		|
+		+---static
+		+---templates
+		|       index.html
+	</code></pre></div>
+	<div class="sectionWriting">
+	flaskApp1 is the name of the application and name of root folder. The run.py file looks like this:
+	</div>
+
+	<div class="sectionWriting"> <h5>run.py</h5><pre class="codeBackground" ><code >
+from appFolder import app
+
+
+if __name__ == "__main__":
+	app.run(debug=True)
+	</code></pre></div>
+
+	<div class="sectionWriting">
+	The appFolder contains the rest of the code and other files like the pictures, videos, database or what-have-you. In the other tutorials you’ll see this labeled as “app” that might even be convention but even when I came back to doing this exact document I was getting confused with all the time “app” is used so I’ve purposefully, called it “appFolder”. This maybe confusing but the nice part of having so much other content is that you can compare to get the full understanding.
+	<br/><br/>
+	The next file I’ll show is the __init__.py file. This file has to be called this.
+	</div>
+
+	<div class="sectionWriting"> <h5>__init__.py</h5><pre class="codeBackground" ><code >
+from flask import Flask
+
+app= Flask(__name__)
+
+from appFolder import routes
+	</code></pre></div>
+
+
+	<div class="sectionWriting">
+
+	The next file I’ll show is the routes.py file. This can be called anything. I've also seen it be called views.py.
+	</div>
+
+	<div class="sectionWriting"> <h5>routes.py</h5><pre class="codeBackground" ><code >
+from appFolder import app
+from flask import render_template, request
+
+
+@app.route("/",methods=['POST','GET'])
+def home():
+    if request.method=="POST":
+        formDict = request.form.to_dict()
+        print(formDict)
+    return render_template('index.html')
+	</code></pre></div>
+
+
+	<div class="sectionWriting">
+	Here's a screen shot of the what the index.html looks like. I've not mastered html quite yet so there's no nice copy-paste feature here but you get the idea.
+	</div>
+	<div class="sectionWriting"> <h5>index.html</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/01indexHtmlScreenshot.PNG') }} > 
+	</div>
+
+Next we'll <a href="/blog/webHostingAWS">set up the VM through AWS</a>
+<br/><br/>
+<form method="POST" action="" enctype="multipart/form-data">
+<div class="col-8">
+<textarea class="form-control " name="textareaEntry" placeholder="Enter comments or questions here...">{{ textareaEntry }}</textarea>
+<button type="submit" class="btn btn-primary" name="submitPost" value="True">Submit Post</button>
+</div>
+</form>
+
+<br/><br/>
+<h3>Comments</h3>
+
+<br/>
+{% for post in posts %}
+    <article class="media content-section rm-border bodyColor">
+        <div class="media-body">
+            <div class="article-metadata">
+            <small class="text-muted">{{ post.datePosted.strftime('%Y-%m-%d') }} by {{ post.author.username }}</small>
+        </div>
+        <p class="article-content">{{ post.content }}</p>
+
+        </div>
+    </article>
+{% endfor %}
+
+
+
+</div>
+</body>
+{% endblock %}

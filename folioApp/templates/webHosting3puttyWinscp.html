@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+
+{% block title %} Web Hosting {% endblock %}
+
+{% block main %}
+
+<body>
+<div class="spacePageBorder">
+	<div class="index-title">
+		<h1 class="h1-index">Documentation for creating a web application on AWS, Centos 8, python3, Flask, Miniconda, nginx, gunicorn</h1>
+	</div>
+
+
+<div class="blogHeading1"><h2>Outline</h2>
+<ol class="tocList" type="1">
+	<li><a href="/blog/webHostingFlask">Build Flask Application</a></li>
+	<li><a href="/blog/webHostingAWS">Setup VM through AWS</a></li>
+	<li>Putty and WinSCP</li>
+	<li><a href="/blog/webHostingVmEnvironment">Setup VM environment, firewall, miniconda</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingVmEnvironment#miniconda">Miniconda</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#port5000">Get app run on port 5000</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#disableFirewall">Disable firewall</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#installNginx">Install nginx</a></li>
+		<ol type="a">
+			<li><a href="/blog/webHostingVmEnvironment#conf">Nginx conf file setup</a></li>
+			<li><a href="/blog/webHostingVmEnvironment#proxyParams">Proxy params</a></li>
+		</ol>
+		<li><a href="/blog/webHostingVmEnvironment#installGunicorn">Install gunicorn</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#serviceFile">Application run in background (create service file)</a></li>
+		<li><a href="/blog/webHostingVmEnvironment#selinux">SELINUX</a></li>
+	</ol>
+	<li><a href="/blog/webHostingDomain">Get Domain and certify site (host second application on same VM)</a></li>
+	<ol type="i">
+		<li><a href="/blog/webHostingDomain#route53">Route 53</a></li>
+		<li><a href="/blog/webHostingDomain#newConf">Build conf files with different ip address</a></li>
+		<li><a href="/blog/webHostingDomain#certbot">Certbot HTTPS</a></li>
+	</ol>	
+</ol>
+
+<br/><br/><br/>
+
+<div class="blogHeading1"><h2>Set up Putty and WinSCP</h2></div>
+	<div class="sectionWriting">
+	Putty will be the connection and terminal you’ll use to communicate with your VM. WinSCP will be the folder and file sharing interface between your local computer and the VM. So you’ll need both and AWS will help make that connection. In the previous section we launched the VM instance. At “Step 7: Review Instance Launch” you were given an option to create a key pair. Select “Create a new key pair” and give it a Name. I can be anything. I named it awsKeyPair.
+	<br/>
+	Before launching instances select create a new key pair
+	</div>
+	<div class="sectionWriting"> <h5>Create Key Pair</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/19createKeyPair.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Then click “Download Key Pair”. Save the pem file. In my example the file name is “awsKeyPair.pem”. Then click “Launch instances”.
+	</div>
+	<div class="sectionWriting"> <h5>Create Key Pair</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/20savePemfile.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Downloads folder should have the pem file you just created.
+	</div>
+	<div class="sectionWriting"> <h5>Create Key Pair</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/21downloadsFolderWithPemFile.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Go to download Putty Key Generator. 
+	<br/>
+	Here is a video that shows how to make the ppk file from the pem file we just created.
+	<a href="https://www.youtube.com/watch?v=1wQ8wQfa7lw">YouTube video</a> on creating ppk file from pem file.
+	<br/><br/>
+	I already downloaded and installed Putty and Putty Key Generator. I searched for “puttygen” and found this application.
+	</div>
+	<div class="sectionWriting"> <h5>Putty Key Generator</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/22puttyKeyGenerator.PNG') }} width="30%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Once you’ve created the ppk file you’ll want to load the ppk file to your. In the Putty Configuration GUI you’ll go to Connection > SSH > Auth then under “Private key file for authentication:” browse for the ppk file.
+	</div>
+	<div class="sectionWriting"> <h5>Create Key Pair</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/23puttyLoadPpkKeyPair.PNG') }} width="30%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Once you do that then you’ll go back to “Session” and enter the IP address and you can give the Session a name and save. This way you can always come back to it.
+	</div>
+	<div class="sectionWriting"> <h5>Load profile</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/24puttyLoadProfile.PNG') }} width="30%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Click “Open” and you’ll get a terminal screen to your computer.
+	</div>
+	<div class="sectionWriting"> <h5>Logged into terminal through Putty</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/25puttyLoggedIntoTerminal.PNG') }} width="50%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Go to download WinSCP.<br/><br/>
+	Link the ppk key by clicking on Adanced > SSH > Authentication. Then under “Private key file:” browse to fine the ppk file you’ve created.
+	</div>
+	<div class="sectionWriting"> <h5>Use key pair again for WinSCP</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/26linkWinscp.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	Once you have the “Host name:” (IP address), “User name:” and ppk key loaded click “Login”.
+	</div>
+	<div class="sectionWriting"> <h5>Login to WinSCP</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/27loginToWinscp.PNG') }} width="80%"> 
+	</div>
+
+	<div class="sectionWriting">
+	You’ll see on the right side an empty directory on your new machine. My user name is “ec2-user” yours may be something else. You can drag files and folders from the left side which is my personal machine I’m using to log into the VM. You can also drag from any windows Explorer window as well, which is what I usually do.
+	</div>
+	<div class="sectionWriting"> <h5>Logged into WinSCP</h5>
+	 <img src={{ url_for('static', filename='/blog/webHosting/images/28winscpVmFolderView.PNG') }} width="80%"> 
+	</div>
+
+
+
+
+
+Next we'll <a href="/blog/webHostingVmEnvironment">set up the VM environment</a>
+<br/><br/>
+<form method="POST" action="" enctype="multipart/form-data">
+<div class="col-8">
+<textarea class="form-control " name="textareaEntry" placeholder="Enter comments or questions here...">{{ textareaEntry }}</textarea>
+<button type="submit" class="btn btn-primary" name="submitPost" value="True">Submit Post</button>
+</div>
+</form>
+
+<br/><br/>
+<h3>Comments</h3>
+
+<br/>
+{% for post in posts %}
+    <article class="media content-section rm-border bodyColor">
+        <div class="media-body">
+            <div class="article-metadata">
+            <small class="text-muted">{{ post.datePosted.strftime('%Y-%m-%d') }} by {{ post.author.username }}</small>
+        </div>
+        <p class="article-content">{{ post.content }}</p>
+
+        </div>
+    </article>
+{% endfor %}
+
+
+
+
+
+</div>
+</body>
+{% endblock %}

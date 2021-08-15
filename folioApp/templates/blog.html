@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %} Blog {% endblock %}
+
+{% block main %}
+<!--<style type="text/css">.description {color:#990000}</style>-->
+
+<section class="spacePageBorder">
+    <div class="container">
+
+
+		<div class="index-title">
+			<h1 class="h1-index">Blog</h1>
+		</div>
+
+
+		<div class="blogContentsPageSubDiv">
+
+			<div class="webHosting"><a href="/blog/webHostingFlask">
+				<div><h3 class="h3-dt">Web Hosting Documentation</h3>
+					<p class="p-dt">Documentation for creating a web application on AWS,
+					Centos 8, python3, Flask, Miniconda, nginx, gunicorn</p>
+				</div>
+			</a></div>
+			<div class="oneMachineTwoApps"><a href="/blog/blog20210528">
+				<div><h3 class="h3-dt">One Machine Two Apps Two Ports</h3>
+					<p class="p-dt">Follow up documentation for creating a web application on
+					Ubuntu, Flask, Miniconda, nginx, gunicorn. This just shows the nginx and services files.</p>
+				</div>
+			</a></div>
+
+		</div>
+
+
+
+
+</div>
+</section>
+{% endblock %}
