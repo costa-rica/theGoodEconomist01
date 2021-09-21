@@ -14,7 +14,7 @@ class Post(db.Model):
 
 
     def __repr__(self):
-        return f"Post('{self.id}','{self.date_posted}')"
+        return f"Post('{self.id}','{self.datePosted}')"
 
 
 class Datatoolspage(db.Model):
@@ -26,7 +26,7 @@ class Datatoolspage(db.Model):
     
 
     def __repr__(self):
-        return f"DataToolsPage('{self.id}','{self.date_posted}','{self.title}')"
+        return f"DataToolsPage('{self.id}','{self.datePosted}','{self.title}')"
 
 class Blogpage(db.Model):
     __bind_key__ = 'dbSite'
@@ -36,7 +36,7 @@ class Blogpage(db.Model):
     content = db.Column(db.Text)
 
     def __repr__(self):
-        return f"BlogPage('{self.id}','{self.date_posted}','{self.title}')"
+        return f"BlogPage('{self.id}','{self.datePosted}','{self.title}')"
 
 
 class User(db.Model):
